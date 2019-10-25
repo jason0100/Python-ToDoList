@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29411.108
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Python-toToList", "Python-toToList\Python-toToList.pyproj", "{689F4D5D-A661-4180-A10E-F6656B9DEAC6}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Python-toDoList", "Python-toToList\Python-toDoList.pyproj", "{689F4D5D-A661-4180-A10E-F6656B9DEAC6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

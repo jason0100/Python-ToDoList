@@ -1,0 +1,16 @@
+[
+  {
+    "text": "My TodoList1",
+    "todoitems": [
+      "Movie",
+      "Restaurent",
+      "Japan"
+    ]
+  },
+  {
+    "text": "Travel wishlist",
+    "todoitems": [
+      "USA"
+    ]
+  }
+]

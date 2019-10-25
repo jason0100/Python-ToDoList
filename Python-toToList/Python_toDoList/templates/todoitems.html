@@ -1,0 +1,25 @@
+﻿{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}.</h2>
+
+{% if todolist %}
+<table class="table table-hover">
+    <tbody>
+        {% for i in todolist.toDoItems %}
+        <tr>
+            <td>
+                <!--<a href="/todoitems/{{i.key}}">{{i.text}}</a>-->
+                {{i.text}}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<span>No todoItems left.</span>
+{% endif %}
+<a href={{ url_for('todolist') }}>Back to List</a>
+
+{% endblock %}
