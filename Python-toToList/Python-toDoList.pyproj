@@ -19,6 +19,7 @@
     <Name>Python-toDoList</Name>
     <RootNamespace>Python-toToList</RootNamespace>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
+    <WebBrowserPort>5555</WebBrowserPort>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -61,8 +62,8 @@
     <Content Include="Python_toDoList\models\samples.json">
       <SubType>Code</SubType>
     </Content>
-    <Content Include="Python_toDoList\templates\todoitems.html" />
     <Content Include="Python_toDoList\templates\todolist.html" />
+    <Content Include="Python_toDoList\templates\todolists.html" />
     <Content Include="requirements.txt" />
     <Content Include="Python_toDoList\static\content\bootstrap.css" />
     <Content Include="Python_toDoList\static\content\bootstrap.min.css" />

@@ -5,6 +5,7 @@ Repository of polls that stores data in a MongoDB database.
 
 from bson.objectid import ObjectId, InvalidId
 from pymongo import MongoClient
+from flask import jsonify
 
 from . import toDoItem, toDoList, toDoNotFound
 
@@ -36,40 +37,68 @@ class Repository(object):
 
     def get_todolists(self):
         """Returns all  from the repository."""
-        docs = self.collection.find()
+        docs = self.collection.find().sort([['_id',-1]])
         print('MONGODB_COLLECTION='+str(self.collection))
         print('get_todolists='+str(docs.count()))
+        #處理objectid
         lists = [_todolist_from_doc(doc) for doc in docs]
         return lists
 
-    
+    def get_todolist(self, todolist_name):
+        result =['status', 'msg']
+        print('mongodb.py='+todolist_name)
+        doc = self.collection.find_one({'name':todolist_name})
+        print('doc='+str(doc))
+        list = _todolist_from_doc(doc)
+        
+        #jsondocs=json.dumps(_todolist_from_doc)
+        #print('docs='+str(_todolist_from_doc))
+        #print('list='+json.dumps(list))
+        #return jsonify(docs)
+        #return str(_todolist_from_doc)
+        return list
+
+
 
     def add_list(self, name):
         result =['status', 'msg']
         print('mongodb.py >>>add_list(self, name):='+str(name))
         doc = self.collection.find_one({'name':name})
-        #if doc is not None:
-        #    result[0]='error'
-        #    result[1]='List Duplicated.'
+        if doc is not None:
+            result[0]='error'
+            result[1]='List Duplicated.'
             
            
-        #else:
-        list_doc = {
-            'name': name,
-            'items':[]
-        }
-        addResult = self.collection.insert(list_doc)
-        print('addResult='+str(addResult))
-
-        if addResult!='':
-            result[0]='success'
-            result[1]='Add list success.'
         else:
-            result[0]='error'
-            result[1]='DB error'
+            list_doc = {
+                'name': name,
+                'items':[]
+            }
+            addResult = self.collection.insert(list_doc)
+            print('addResult='+str(addResult))
+
+            if addResult!='':
+                result[0]='success'
+                result[1]='Add list success.'
+            else:
+                result[0]='error'
+                result[1]='DB error'
         
         print(str(result))
         
+        return result
+
+    def edit_list(self,key,name):
+        result =['status', 'msg']
+        print('mongodb.py >>>edit_list(self, key)='+str(key)+'/'+str(name))
+        doc = self.collection.find_one({'_id':ObjectId(key)})
+        if doc is None:
+            result[0]='error'
+            result[1]='List is not exist.'
+        else:
+            result[0]='success'
+            result[1]='Edit list success.'
+            self.collection.update(doc,{"$set":{"name":name}})
         return result
 
     def del_list(self, key):
@@ -88,3 +117,68 @@ class Repository(object):
         print(str(result))
         
         return result
+
+    def add_item(self, todolist_name, todoitem_name):
+        result =['status', 'msg']
+        print('add_item >>>='+str(todolist_name)+ str(todoitem_name))
+        doc = self.collection.find_one({'name':todolist_name})
+        itemsList = doc['items']
+        for index,item in enumerate(itemsList):
+            print(index)
+            print(item)
+        if doc is  None:
+            result[0]='error'
+            result[1]='List not exist.'
+            print('if doc is  None:')
+        else:
+            print('==========if doc is  Not None:')
+            #query = []
+            query = self.collection.find_one({"items":{"$elemMatch":{"name":todoitem_name}}})
+            #print(query['items'])
+            if query is None:
+                try:
+                    item_doc = {
+                            'name':todoitem_name,
+                            }
+                    #push object to an array in collection
+                    self.collection.update(doc,{'$push':{"items":{'name':todoitem_name}}})
+                    result[0]='success'
+                    result[1]='Add Item success.'
+                except:
+                    result[0]='error'
+                    result[1]='DB error.'
+            else:
+                result[0]='error'
+                result[1]='Item exist.'
+                
+        print(str(result))
+        return result
+
+
+    def del_item(self, todolist_name, todoitem_name):
+       result =['status', 'msg']
+       print('Mongodb=>>>>>>todolist_name={list},totoitem_name={item}'.format(list=str(todolist_name),item=str(todoitem_name)))
+       doc = self.collection.find_one({'name':todolist_name})
+       if doc is  None:
+            result[0]='error'
+            result[1]='List not exist.'
+            print('if doc is  None:')
+       else:
+           itemsList = doc['items']
+           print('doc='+str(doc))
+           #query = self.collection.find_one({"items":{"$elemMatch":{"name":todoitem_name}}})
+           query = self.collection.find_one({"items.name":todoitem_name})
+           print('query='+str(query))
+           if query is not None:
+             self.collection.update(doc,{"$pull":{"items":{"name":todoitem_name}}})
+             result[0]='success'
+             result[1]='Delete item success.'
+     
+           else:
+                result[0]='error'
+                result[1]='Item not exist.'
+        
+           print(str(result))
+       return result
+        
+   

@@ -1,104 +1,67 @@
 ﻿{% extends "layout.html" %}
-
 {% block css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css">
 <style>
     .fa-trash {
-        color:red;
-  cursor:pointer;
-    float:right;
-}
-
+        cursor: pointer;
+        float: right;
+    }
 </style>
 
 {% endblock %}
 
-
 {% block content %}
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
 
-<h2>{{ title }}.</h2>
-<button class="btn btn-primary" data-toggle="modal" data-target="#myModal">Add List</button>
 
-<!-- The Modal -->
-<div class="modal fade" id="myModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
+        <h2 id="title">{{ title }}</h2>
+        <a href={{ url_for('todolists_all') }}>Back to List</a>
 
-            <!-- Modal Header -->
-            <div class="modal-header">
-                <h4 class="modal-title">Add New To Do List</h4>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
+        <div class="form-group">
+            <label class="control-label">Add New todo item:</label>
 
-            <!-- Modal body -->
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="control-label">List Name</label>
-                    <input class="form-control" type="text" name="listName" id="listName" />
-                    <sapn class="errorMsg text-danger" id="errorMsg"></sapn>
-                </div>
-            </div>
-
-            <!-- Modal footer -->
-            <div class="modal-footer">
-                <button class="btn btn-success" onclick="addNewLists('#listName')">Save</button>
-                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-            </div>
-
+            <input class="form-control" id="newItem" name="newItem" />
+            <button class="btn btn-primary" id="addNewItem">Submit</button>
         </div>
+        <br />
+        <span id="errorMsg" class="text-danger"></span>
+        {% if todolist.toDoItems %}
+
+        <table class="table table-hover">
+            <tbody>
+                {% for i in todolist.toDoItems %}
+                <tr>
+                    <td>
+
+                        <span> {{i.name}}</span>
+                        <i class="fa fa-trash"></i>
+
+
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <span>No todo Items.<br /></span>
+        {% endif %}
     </div>
 </div>
-
-{% if todolists %}
-<table class="table table-hover">
-    <tbody>
-        {% for t in todolists %}
-        <tr>
-            <td>
-                <div>
-                    <input value={{t.key}} /> 
-                    <a href="/todoitems/?key={{t.key}}">{{t.text}}</a> 
-                    <i class="fa fa-trash"></i>
-                </div>
-
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No ToDoList available.</p>
-<br />
-<form action="/seed" method="post">
-    <button class="btn btn-primary" type="submit">Create Sample ToDoList</button>
-</form>
-
-{% endif %}
-
-
 {% endblock %}
- {% block scripts %}
+
+{% block scripts %}
 <script>
-    //alert('test')
-    function addNewLists(element) {
-        //alert($(element).val())
-        //$.post('/addList', { 'name': $(element).val() }).done(function (data) {
-        //    console.log(JSON.stringify(data))
-        //    data = JSON.parse(data);
-        //    if (data[0] == 'success')
-        //        location.reload();
-        //    else {
-        //        $('#errorMsg').text(data[1]);
+    $('#addNewItem').click(function () {
+        //alert($('#newItem').val());
 
-        //    }
-
-        //})
-
-        const uri = "/todolist"
+        const uri = "/todoitem?todolist_name=" + $('#title').text()
         const list = {
-            name: $(element).val()
+            name: $(newItem).val()
         };
 
+        console.log('uri=' + uri)
+        console.log('name=' + list)
 
         fetch(uri, {
             method: 'POST',
@@ -120,37 +83,33 @@
                     $('#errorMsg').text(result[1]);
                 }
             });
-
-    }
-
-
-   
+    })
     $('.fa-trash').click(function () {
-        if (confirm('Are you sure to delete this?')) { 
-            console.log('delete key id = ' + $(this).siblings('input').val());
-
-            const uri = "/todolist";
-            fetch(uri+'/'+$(this).siblings('input').val(), {
-                method: 'DELETE',
-        
-            }).then(res => {
-                    return res.json();
-                })
-            .then(result => {
+        if (confirm('Are you sure to delete this?')) {
+            console.log('delete item name = ' + $(this).siblings('span').text().trim());
           
-                if (result[0] == 'success') {
-                    location.reload();
-                }
-                else {
-  
-                    alert(result[1]);
-                }
-            });
+            const uri = '/todoitem/?todolist_name='+$('#title').text()+'&todoitem_name='+ $(this).siblings('span').text().trim();
+            fetch(uri , {
+                method: 'DELETE',
+             
+            }).then(res => {
+                return res.json();
+            })
+                .then(result => {
+
+                    if (result[0] == 'success') {
+                        location.reload();
+                    }
+                    else {
+
+                        alert(result[1]);
+                    }
+                });
         }
 
-
-    
-    })
-    
+     })
 </script>
+
+
+             
 {% endblock %}
