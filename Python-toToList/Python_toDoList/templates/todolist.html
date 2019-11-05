@@ -2,9 +2,13 @@
 {% block css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css">
 <style>
-    .fa-trash {
+    .fa-trash, .fa-pen {
         cursor: pointer;
         float: right;
+    }
+
+    .fa-pen {
+        margin-right:20px;
     }
 </style>
 
@@ -13,7 +17,37 @@
 {% block content %}
 <div class="row">
     <div class="col-md-8 col-md-offset-2">
+        <!-- The Modal -->
+        <div class="modal fade" id="myModal" data-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
 
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">Edit Item</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <input id="itemId" />
+                        <div class="form-group">
+                            <label class="control-label">Item Name</label>
+                            <input class="form-control" type="text"  id="itemName" />
+                            <sapn class="errorMsg text-danger" id="errorMsg"></sapn>
+                        </div>
+                        <div id="msg"></div>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button class="btn btn-success" id="saveBtn">Save</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
 
         <h2 id="title">{{ title }}</h2>
         <a href={{ url_for('todolists_all') }}>Back to List</a>
@@ -22,8 +56,9 @@
             <label class="control-label">Add New todo item:</label>
 
             <input class="form-control" id="newItem" name="newItem" />
-            <button class="btn btn-primary" id="addNewItem">Submit</button>
+            <button class="btn btn-primary" id="addNewItem" disabled>Submit</button>
         </div>
+        <div id="errMsg"></div>
         <br />
         <span id="errorMsg" class="text-danger"></span>
         {% if todolist.toDoItems %}
@@ -34,8 +69,8 @@
                 <tr>
                     <td>
 
-                        <span> {{i.name}}</span>
-                        <i class="fa fa-trash"></i>
+                        <span> {{i.name}}</span>&nbsp;<span>{{i.id}}</span>
+                        <i class="fa fa-trash"></i> <i class="fa fa-pen "></i>
 
 
                     </td>
@@ -52,11 +87,28 @@
 
 {% block scripts %}
 <script>
+    method = 'POST'
+
+    $(document).ready(function () {
+        $('#newItem').on('keyup', function () {
+            let empty = false;
+            //empty = $('#newItem').val().length == 0;#前端防空白字串
+            empty = $.trim($('#newItem').val()).length == 0;
+            if (empty) {
+                $('#addNewItem').attr('disabled', true);
+            }
+            else {
+                $('#addNewItem').attr('disabled', false);
+            }
+             
+        })
+       
+    })
     $('#addNewItem').click(function () {
         //alert($('#newItem').val());
 
-        const uri = "/todoitem?todolist_name=" + $('#title').text()
-        const list = {
+         uri = "/todoitem?todolist_name=" + $('#title').text()
+         list = {
             name: $(newItem).val()
         };
 
@@ -80,34 +132,102 @@
                     location.reload();
                 }
                 else {
-                    $('#errorMsg').text(result[1]);
+                    showAlert('errMsg',result[0], result[1]);
                 }
             });
     })
     $('.fa-trash').click(function () {
         if (confirm('Are you sure to delete this?')) {
-            console.log('delete item name = ' + $(this).siblings('span').text().trim());
+            console.log('delete item name = ' + $(this).siblings('span:nth-of-type(2)').text().trim());
           
-            const uri = '/todoitem/?todolist_name='+$('#title').text()+'&todoitem_name='+ $(this).siblings('span').text().trim();
+            const uri = '/todoitem/?todolist_name=' + $('#title').text() + '&todoitem_name=' + $(this).siblings('span:first').text().trim();
+            //const uri = '/todoitem/';
+            console.log('uri=' + uri);
             fetch(uri , {
                 method: 'DELETE',
              
             }).then(res => {
                 return res.json();
             })
-                .then(result => {
+            .then(result => {
 
-                    if (result[0] == 'success') {
-                        location.reload();
-                    }
-                    else {
+                if (result[0] == 'success') {
+                    location.reload();
+                }
+                else {
 
-                        alert(result[1]);
-                    }
-                });
+                    alert(result[1]);
+                }
+            });
         }
 
-     })
+    })
+    function showAlert(div, status, msg) {
+        div = '#' + div;
+        console.log('showAlert='+div)
+        color = 'alert-success';
+        status = status.toUpperCase();
+        if (status != 'SUCCESS') {
+               color = 'alert-danger';
+        }
+        //$('#msg').html('xxx')
+        $(div).html('<div class="alert '+ color +' alert-dismissible">'+
+          '<button type="button" class="close" data-dismiss="alert">&times;</button>'+
+         ' <strong>'+status+'</strong> '+msg+'</div>')
+    }
+
+    $('.fa-pen').click(function () {
+        $('#myModal').modal()
+        method = 'PUT';
+        console.log('edit  name = ' + $(this).siblings('span:first').text());
+        console.log('edit  id = ' + $(this).siblings('span:nth-of-type(2)').text());
+        
+       
+        
+        $('#itemId').val($(this).siblings('span:nth-of-type(2)').text())
+        $('#itemName').val($(this).siblings('span:first').text().trim())
+
+             
+        //$('#listKey').val($(this).siblings('input').val());
+    })
+
+    $('#saveBtn').click(function () {//for PUT
+        console.log('oldname='+$(this).siblings('span').text());
+        if ($('#itemName').val().trim() == '') {
+            showAlert('msg', 'error', 'Item name can not be empty.')
+            //alert()
+        }
+        else {
+            data = {
+                todolist_name: $('#title').text(),
+                id: $('#itemId').val(),
+                newName:$('#itemName').val().trim()
+            };
+            console.log('data=' + JSON.stringify(data))
+            uri='/todoitem'
+            fetch(uri, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(res => {
+                return res.json();
+            })
+            .then(result => {
+                //console.log(result[0]);
+                if (result[0] == 'success') {
+                    location.reload();
+                }
+                else {
+                    showAlert('errMsg',result[0], result[1]);
+                }
+            });
+        }
+    })
+
 </script>
 
 

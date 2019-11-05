@@ -10,6 +10,7 @@ from flask import jsonify
 from . import toDoItem, toDoList, toDoNotFound
 
 import json
+import uuid
 
 
 def _todolist_from_doc(doc):
@@ -133,15 +134,20 @@ class Repository(object):
         else:
             print('==========if doc is  Not None:')
             #query = []
-            query = self.collection.find_one({"items":{"$elemMatch":{"name":todoitem_name}}})
-            #print(query['items'])
+            query = self.collection.find_one({'name':todolist_name,"items":{"$elemMatch":{"name":todoitem_name}}})
+            print(str(query))
             if query is None:
                 try:
                     item_doc = {
+                            'id':uuid.uuid1(),
+                            #'id':query['items'].count(),
                             'name':todoitem_name,
                             }
                     #push object to an array in collection
-                    self.collection.update(doc,{'$push':{"items":{'name':todoitem_name}}})
+
+                    print('item_doc='+str(item_doc['id']))
+                    self.collection.update(doc,{'$push':{"items":item_doc}})
+                    print('test')
                     result[0]='success'
                     result[1]='Add Item success.'
                 except:
@@ -154,6 +160,35 @@ class Repository(object):
         print(str(result))
         return result
 
+    def edit_item(self,todolist_name, id, newName):
+        result =['status', 'msg']
+        print('mongodb.py >>>edit_item(self,todolist_namem id, newName)='+str(todolist_name)+'/'+str(id)+'/'+str(newName))
+        doc = self.collection.find_one({'name':todolist_name})
+        query_oldName = self.collection.find_one({'name':todolist_name,"items.id":uuid.UUID(id)})
+        query_newName = self.collection.find_one({'name':todolist_name,"items.name":newName})
+        #print('query='+str(query_newName))
+        if doc is None:
+            result[0]='error'
+            result[1]='List is not exist.'
+        elif query_oldName is None:
+            result[0]='error'
+            result[1]='Item is not exist.'
+        elif query_newName is not None:
+            result[0]='error'
+            result[1]='New name duplicate.'
+          
+        else:
+            itemsList = doc['items']
+            for i in itemsList:
+                print(i['id'])
+            if query_oldName is not None:
+                self.collection.update({'name':todolist_name,"items.id":uuid.UUID(id)},{"$set":{"items.$.name":newName}})
+                result[0]='success'
+                result[1]='Edit item success.'
+            else:
+                result[0]='error'
+                result[1]='Item not exist.'
+        return result
 
     def del_item(self, todolist_name, todoitem_name):
        result =['status', 'msg']

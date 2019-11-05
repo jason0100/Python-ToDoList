@@ -93,10 +93,7 @@ class result:
 @app.route('/todolist',methods=['POST'])
 def addList():
     
-    #get
-    #name=request.args.get('name')
-    #post
-    data = request.get_json()
+    data = request.get_json()#from body
     print('view data = '+str(data))
     res=result()
  
@@ -108,7 +105,7 @@ def addList():
 @app.route('/todolist/<key>', methods=['PUT'])
 def editList(key):
     print('ok')
-    data = request.get_json()
+    data = request.get_json()#from body
     print('name='+str(data))
     res=result()
     print('key={key},name={name}'.format(key=str(key),name=str(data['name'])))
@@ -131,17 +128,40 @@ def delList(key):
 @app.route('/todoitem',methods=['POST'])
 def addItem():
     todolist_name = request.args['todolist_name']
+
+    print('todolist_name='+todolist_name)
+    
+    data = request.get_json()
+    print(' str(data[name]).strip()='+ str(data['name']).strip()+"*")
+    if str(data['name']).strip()=='':#後端防空白字串
+        print('empty')
+        jsondata=['error','ItemName is empty.']
+        jsondata=json.dumps(jsondata)
+    else:
+        print('data='+ str(data))
+        res = result()
+        res=repository.add_item(todolist_name, data['name'])
+        jsondata=json.dumps(res)
+        print('jsondata= '+jsondata)
+    return jsondata
+
+ 
+@app.route('/todoitem',methods=['PUT'])
+def editItem():
+   
     data = request.get_json()
     print('data='+ str(data))
     res = result()
-    res=repository.add_item(todolist_name, data['name'])
+    res=repository.edit_item(data['todolist_name'], data['id'],data['newName'])
     jsondata=json.dumps(res)
     print('jsondata= '+jsondata)
     return jsondata
 
+
 @app.route('/todoitem/', methods=['DELETE'])
 def delItem():
     todolist_name = request.args['todolist_name']
+    
     todoitem_name = request.args['todoitem_name']
     print('todolist_name={list},todoitem_name={item}'.format(list=str(todolist_name),item=str(todoitem_name)))
     
